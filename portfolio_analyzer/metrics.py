@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from sklearn import linear_model
 from statsmodels import regression
 
 
@@ -77,3 +78,19 @@ class MainMetrics:
     def __event_frequency(data):
         data_frequency = (data.index[1] - data.index[0]) / pd.offsets.Day(1)
         return 365 / data_frequency
+
+
+def factor_analysis(benchmark_data, factors_data):
+    """Perform factor analysis on the benchmark."""
+    benchmark_data.columns = ["benchmark"]
+    factors_names = factors_data.columns
+    data = np.log(pd.concat([factors_data, benchmark_data], axis=1)).diff().dropna()
+    y = data[["benchmark"]].values
+    X = data[factors_names].values
+    reg_model = linear_model.LinearRegression().fit(X, y)
+    results = {
+        "beta_" + factor_name: [factor_beta]
+        for factor_name, factor_beta in zip(factors_names, reg_model.coef_[0])
+    }
+    results["alpha"] = reg_model.intercept_
+    return pd.DataFrame(results)
