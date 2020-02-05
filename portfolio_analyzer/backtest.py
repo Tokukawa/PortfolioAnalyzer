@@ -36,12 +36,14 @@ class OutOfSampleBackTest:
         portfolio_optimization,
         splits,
         method="time-series-cv",
+        past_blocks=1,
         benchmark=False,
     ):
         self.data = data
         self.portfolio_optimization = portfolio_optimization
         self.splits = splits
         self.method = method
+        self.past_blocks = past_blocks
         self.benchmark = benchmark
 
     def run(self):
@@ -64,9 +66,18 @@ class OutOfSampleBackTest:
                 backtest = NaiveBackTest(my_portfolio, data_splits[i + 1])
                 out_of_samples_performance.append(backtest.run().pct_change().fillna(0))
 
+        elif self.method == "asym-blocks":
+            for i in range(self.splits)[self.past_blocks : -1]:
+                my_portfolio = portfolio2dic(
+                    self.portfolio_optimization(
+                        pd.concat(data_splits[(i - self.past_blocks) : i])
+                    )
+                )
+                backtest = NaiveBackTest(my_portfolio, data_splits[i + 1])
+                out_of_samples_performance.append(backtest.run().pct_change().fillna(0))
         else:
             print(
-                "I don't know the method {}. Allowed methods are: time-series-cv , equal-blocks.".format(
+                "I don't know the method {}. Allowed methods are: time-series-cv , equal-blocks and asym-blocks.".format(
                     self.method
                 )
             )
@@ -77,6 +88,9 @@ class OutOfSampleBackTest:
         out_of_sample_portfolio = np.exp(historical_series) * 1
         out_of_sample_portfolio.columns = ["portfolio"]
         if isinstance(self.benchmark, pd.DataFrame):
+            self.benchmark.columns = ["benchmark"]
+            shift_value = self.benchmark.loc[out_of_sample_portfolio.index[0]][0]
+            self.benchmark = self.benchmark / shift_value
             out_of_sample_portfolio = pd.concat(
                 [out_of_sample_portfolio, self.benchmark], axis=1
             ).dropna()
