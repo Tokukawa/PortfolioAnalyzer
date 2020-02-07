@@ -7,22 +7,31 @@ from .utils import portfolio2dic
 class NaiveBackTest:
     """Perform naive backtest of the portfolio."""
 
-    def __init__(self, tickers_ratio, data):
+    def __init__(self, tickers_ratio, data, rebalance=True):
         self.tickers_ratio = tickers_ratio
         self.tickers = tickers_ratio.keys()
         self.weights = np.array(list(tickers_ratio.values()))
         self.data = data
+        self.rebalance = rebalance
 
     def run(self, capital=100.0):
         """Execute the back test."""
-        log_data = np.log(
-            np.sum(
-                (1 + self.data[self.tickers].pct_change()).dropna() * self.weights,
-                axis=1,
+        if self.rebalance:
+            log_data = np.log(
+                np.sum(
+                    (1 + self.data[self.tickers].pct_change()).dropna() * self.weights,
+                    axis=1,
+                )
             )
-        )
-        historical_series = np.cumsum(log_data)
-        portfolio = (np.exp(historical_series) * capital).to_frame()
+            historical_series = np.cumsum(log_data)
+            portfolio = (np.exp(historical_series) * capital).to_frame()
+        else:
+            log_data = np.log((1 + self.data[self.tickers].pct_change()).dropna())
+            historical_series = np.cumsum(log_data, axis=0)
+            portfolio = (
+                np.sum(np.exp(historical_series) * self.weights, axis=1) * capital
+            ).to_frame()
+
         portfolio.columns = ["portfolio"]
         return portfolio
 
@@ -38,6 +47,7 @@ class OutOfSampleBackTest:
         method="time-series-cv",
         past_blocks=1,
         benchmark=False,
+        rebalance=True,
     ):
         self.data = data
         self.portfolio_optimization = portfolio_optimization
@@ -45,6 +55,7 @@ class OutOfSampleBackTest:
         self.method = method
         self.past_blocks = past_blocks
         self.benchmark = benchmark
+        self.rebalance = rebalance
 
     def run(self):
         """Perform the task needed for the back test."""
@@ -55,7 +66,9 @@ class OutOfSampleBackTest:
                 my_portfolio = portfolio2dic(
                     self.portfolio_optimization(pd.concat(data_splits[:i]))
                 )
-                backtest = NaiveBackTest(my_portfolio, data_splits[i + 1])
+                backtest = NaiveBackTest(
+                    my_portfolio, data_splits[i + 1], self.rebalance
+                )
                 out_of_samples_performance.append(backtest.run().pct_change().fillna(0))
 
         elif self.method == "equal-blocks":
@@ -63,7 +76,9 @@ class OutOfSampleBackTest:
                 my_portfolio = portfolio2dic(
                     self.portfolio_optimization(data_splits[i])
                 )
-                backtest = NaiveBackTest(my_portfolio, data_splits[i + 1])
+                backtest = NaiveBackTest(
+                    my_portfolio, data_splits[i + 1], self.rebalance
+                )
                 out_of_samples_performance.append(backtest.run().pct_change().fillna(0))
 
         elif self.method == "asym-blocks":
@@ -73,7 +88,9 @@ class OutOfSampleBackTest:
                         pd.concat(data_splits[(i - self.past_blocks) : i])
                     )
                 )
-                backtest = NaiveBackTest(my_portfolio, data_splits[i + 1])
+                backtest = NaiveBackTest(
+                    my_portfolio, data_splits[i + 1], self.rebalance
+                )
                 out_of_samples_performance.append(backtest.run().pct_change().fillna(0))
         else:
             print(
