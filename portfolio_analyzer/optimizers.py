@@ -12,7 +12,7 @@ def minimal_variance(data):
     A = np.vstack((A, np.ones((1, sigma.shape[0] + 1))))
     A[-1, -1] = 0.0
     B = np.zeros((1, A.shape[0]))[0]
-    B[-1] = -1
+    B[-1] = 1
     w = np.dot(np.linalg.inv(A), B)
     return pd.DataFrame([w[:-1]], columns=data.columns)
 
