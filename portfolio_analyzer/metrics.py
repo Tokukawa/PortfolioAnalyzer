@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pandas_market_calendars as mcal
 import statsmodels.api as sm
 from sklearn import linear_model
 from statsmodels import regression
@@ -8,7 +9,8 @@ from statsmodels import regression
 class MainMetrics:
     """Compute the main metrics for asset."""
 
-    def __init__(self, benchmark):
+    def __init__(self, benchmark, mkt="NYSE"):
+        self.mkt_cal = mcal.get_calendar(mkt)
         self.benchmark = benchmark
         self.benchmark.columns = ["benchmark"]
 
@@ -57,12 +59,19 @@ class MainMetrics:
         beta = model.params[1]
         return alpha * self.__event_frequency(data), beta
 
-    @staticmethod
-    def __sharpe_ratio(data):
+    def __sharpe_ratio(self, data):
         return_data = data.pct_change().dropna()
         mu = np.mean(return_data).values[0]
         std = np.std(return_data).values[0]
-        return mu / std
+        return mu / std * np.sqrt(self.__event_frequency(data))
+
+    def __event_frequency(self, data):
+        end_date = data.index[1]
+        start_date = data.index[0]
+        data_frequency = len(
+            self.mkt_cal.valid_days(start_date=start_date, end_date=end_date)
+        )
+        return 251 / data_frequency
 
     @staticmethod
     def __max_drawdown(data):
@@ -73,11 +82,6 @@ class MainMetrics:
             dd = (value - prev_high) / prev_high
             max_draw = min(max_draw, dd)
         return max_draw
-
-    @staticmethod
-    def __event_frequency(data):
-        data_frequency = (data.index[1] - data.index[0]) / pd.offsets.Day(1)
-        return 365 / data_frequency
 
 
 def factor_analysis(benchmark_data, factors_data):
