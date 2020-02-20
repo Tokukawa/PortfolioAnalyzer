@@ -16,6 +16,7 @@ setuptools.setup(
         "sklearn",
         "matplotlib",
         "pandas",
+        "pandas_market_calendars",
         "yahoofinancials",
         "cvxopt",
         "statsmodels  ",
