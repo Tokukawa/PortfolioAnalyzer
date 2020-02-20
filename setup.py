@@ -17,6 +17,7 @@ setuptools.setup(
         "matplotlib",
         "pandas",
         "pandas_market_calendars",
+        "pyportfolioopt",
         "yahoofinancials",
         "cvxopt",
         "statsmodels  ",

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pypfopt.risk_models import CovarianceShrinkage
 from scipy.optimize import minimize
 
 
@@ -20,12 +21,15 @@ def minimal_variance(data):
 def approximated_max_kelly(data):
     """Find a approximated solution of the portofolio based on kelly criterion."""
     returns_data = data.pct_change().dropna()
-    mu = np.mean(returns_data.values, axis=0)
-    sigma = returns_data.cov().values
+    sigma = CovarianceShrinkage(data).shrunk_covariance(delta=1e-2)
+    mu = returns_data.mean(axis=0)
     A = 0.5 * sigma
-    w = np.dot(np.linalg.inv(A), mu)
-    w /= w.sum()
-    return pd.DataFrame([w], columns=data.columns)
+    A = np.hstack((A, np.ones((sigma.shape[0], 1))))
+    A = np.vstack((A, np.ones((1, sigma.shape[0] + 1))))
+    A[-1, -1] = 0.0
+    B = np.hstack((mu, [1]))
+    w = np.dot(np.linalg.inv(A), B)
+    return pd.DataFrame([w[:-1]], columns=data.columns)
 
 
 def total_weight_constraint(x):
