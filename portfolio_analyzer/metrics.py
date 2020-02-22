@@ -32,8 +32,8 @@ class MainMetrics:
         main_metrics["variance"] = self.__var(data)
         main_metrics["relative variance"] = self.__rel_var(data)
         main_metrics["relative return"] = self.__rel_return(data)
-        main_metrics["relative drow down"] = self.__rel_max_drawdown(data)
-        main_metrics["realtive sharpe ratio"] = self.__rel_sharpe_ratio(data)
+        main_metrics["relative draw down"] = self.__rel_max_drawdown(data)
+        main_metrics["relative sharpe ratio"] = self.__rel_sharpe_ratio(data)
         return main_metrics
 
     def __market_corr(self, data):
