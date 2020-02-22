@@ -17,6 +17,7 @@ class MainMetrics:
     def estimate(self, data):
         """Perform the estimation of the metrics for every asset in data."""
         results = {}
+        self.benchmark = self.benchmark.tail(len(data))
         for ticker in data.columns:
             results[ticker] = self.__metrics(data[[ticker]])
         return pd.DataFrame(results)
@@ -29,6 +30,10 @@ class MainMetrics:
         main_metrics["sharpe ratio"] = self.__sharpe_ratio(data)
         main_metrics["max draw down"] = self.__max_drawdown(data)
         main_metrics["variance"] = self.__var(data)
+        main_metrics["relative variance"] = self.__rel_var(data)
+        main_metrics["relative return"] = self.__rel_return(data)
+        main_metrics["relative drow down"] = self.__rel_max_drawdown(data)
+        main_metrics["realtive sharpe ratio"] = self.__rel_sharpe_ratio(data)
         return main_metrics
 
     def __market_corr(self, data):
@@ -69,6 +74,26 @@ class MainMetrics:
     def __var(self, data):
         return_data = data.pct_change().dropna()
         return np.var(return_data).values[0]
+
+    def __rel_var(self, data):
+        var_data = self.__var(data)
+        var_benchmark = self.__var(self.benchmark)
+        return var_data / var_benchmark
+
+    def __rel_return(self, data):
+        ret_data = self.__average_return(data)
+        ret_benchmark = self.__average_return(self.benchmark)
+        return ret_data / ret_benchmark
+
+    def __rel_max_drawdown(self, data):
+        dd_data = self.__max_drawdown(data)
+        dd_benchmark = self.__max_drawdown(self.benchmark)
+        return dd_data / dd_benchmark
+
+    def __rel_sharpe_ratio(self, data):
+        sr_data = self.__sharpe_ratio(data)
+        sr_benchmark = self.__sharpe_ratio(self.benchmark)
+        return sr_data / sr_benchmark
 
     def __event_frequency(self, data):
         end_date = data.index[1]
