@@ -28,6 +28,7 @@ class MainMetrics:
         main_metrics["alpha"], main_metrics["beta"] = self.__alpha_beta(data)
         main_metrics["sharpe ratio"] = self.__sharpe_ratio(data)
         main_metrics["max draw down"] = self.__max_drawdown(data)
+        main_metrics["variance"] = self.__var(data)
         return main_metrics
 
     def __market_corr(self, data):
@@ -64,6 +65,10 @@ class MainMetrics:
         mu = np.mean(return_data).values[0]
         std = np.std(return_data).values[0]
         return mu / std * np.sqrt(self.__event_frequency(data))
+
+    def __var(self, data):
+        return_data = data.pct_change().dropna()
+        return np.var(return_data).values[0]
 
     def __event_frequency(self, data):
         end_date = data.index[1]
