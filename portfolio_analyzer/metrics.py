@@ -89,8 +89,8 @@ class MainMetrics:
         return var_data / var_benchmark
 
     def __rel_return(self, data):
-        ret_data = self.__average_return(data)
-        ret_benchmark = self.__average_return(self.benchmark)
+        ret_data = self.__average_geometric_return(data)
+        ret_benchmark = self.__average_geometric_return(self.benchmark)
         return ret_data / ret_benchmark
 
     def __rel_max_drawdown(self, data):
