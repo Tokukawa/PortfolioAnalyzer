@@ -47,7 +47,7 @@ class MainMetrics:
         )
 
     def __average_arithmetic_return(self, data):
-        return np.mean(data.pct_change().dropna(), axis=0) * self.__event_frequency(
+        return np.mean(data.pct_change().dropna(), axis=0)[0] * self.__event_frequency(
             data
         )
 
