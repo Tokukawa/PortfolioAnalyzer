@@ -18,7 +18,9 @@ class MainMetrics:
     def estimate(self, data):
         """Perform the estimation of the metrics for every asset in data."""
         results = {}
-        self.benchmark = self.benchmark.tail(len(data))
+        self.benchmark = pd.concat([data, self.benchmark], axis=1).dropna()[
+            ["benchmark"]
+        ]
         for ticker in data.columns:
             results[ticker] = self.__metrics(data[[ticker]])
         return pd.DataFrame(results)
