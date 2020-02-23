@@ -25,7 +25,10 @@ class MainMetrics:
     def __metrics(self, data):
         main_metrics = {}
         main_metrics["benchmark correlation"] = self.__market_corr(data)
-        main_metrics["average return"] = self.__average_return(data)
+        main_metrics["average arithmetic return"] = self.__average_arithmetic_return(
+            data
+        )
+        main_metrics["average geometric return"] = self.__average_geometric_return(data)
         main_metrics["alpha"], main_metrics["beta"] = self.__alpha_beta(data)
         main_metrics["sharpe ratio"] = self.__sharpe_ratio(data)
         main_metrics["max draw down"] = self.__max_drawdown(data)
@@ -43,10 +46,15 @@ class MainMetrics:
             .values[0, 1]
         )
 
-    def __average_return(self, data):
+    def __average_arithmetic_return(self, data):
+        return np.mean(data.pct_change().dropna(), axis=0) * self.__event_frequency(
+            data
+        )
+
+    def __average_geometric_return(self, data):
         year_events = self.__event_frequency(data)
         average_return = np.exp(
-            np.mean(np.log((1 + data.pct_change()).dropna()))
+            np.mean(np.log((1 + data.pct_change().dropna())), axis=0)
         ).values[0]
         return average_return ** year_events - 1.0
 
@@ -73,7 +81,7 @@ class MainMetrics:
 
     def __var(self, data):
         return_data = data.pct_change().dropna()
-        return np.var(return_data).values[0]
+        return np.var(return_data).values[0] * self.__event_frequency(data)
 
     def __rel_var(self, data):
         var_data = self.__var(data)
@@ -101,7 +109,7 @@ class MainMetrics:
         data_frequency = len(
             self.mkt_cal.valid_days(start_date=start_date, end_date=end_date)
         )
-        return 251 / data_frequency
+        return 252 / data_frequency
 
     @staticmethod
     def __max_drawdown(data):
