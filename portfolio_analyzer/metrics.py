@@ -9,7 +9,8 @@ from statsmodels import regression
 class MainMetrics:
     """Compute the main metrics for asset."""
 
-    def __init__(self, benchmark, mkt="NYSE"):
+    def __init__(self, benchmark, mkt="NYSE", frequency="daily"):
+        self.frequency = frequency
         self.mkt_cal = mcal.get_calendar(mkt)
         self.benchmark = benchmark
         self.benchmark.columns = ["benchmark"]
@@ -104,12 +105,17 @@ class MainMetrics:
         return sr_data / sr_benchmark
 
     def __event_frequency(self, data):
-        end_date = data.index[1]
-        start_date = data.index[0]
+        end_date = data.index[-1]
+        start_date = data.index[-2]
         data_frequency = len(
             self.mkt_cal.valid_days(start_date=start_date, end_date=end_date)
         )
-        return 252 / data_frequency
+        frequency = 12
+        if data_frequency < 5:
+            frequency = 252
+        if (data_frequency >= 5) and (data_frequency < 20):
+            frequency = 52
+        return frequency
 
     @staticmethod
     def __max_drawdown(data):
