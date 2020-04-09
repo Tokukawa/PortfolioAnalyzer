@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="portfolio_analyzer",
-    version="0.0.1",
+    version="0.0.2",
     author="Tokukawa",
     author_email="emanuele.luzio@gmail.com",
     description="This package is a collection of tools I use to analyze portfolios.",
@@ -13,11 +13,12 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://https://github.com/Tokukawa/PortfolioAnalyzer",
     install_requires=[
+        "pyportfolioopt",
+        "jupyterlab",
         "sklearn",
         "matplotlib",
         "pandas",
         "pandas_market_calendars",
-        "pyportfolioopt",
         "yahoofinancials",
         "cvxopt",
         "statsmodels  ",
