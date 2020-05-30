@@ -40,6 +40,7 @@ class MainMetrics:
         main_metrics["relative return"] = self.__rel_return(data)
         main_metrics["relative draw down"] = self.__rel_max_drawdown(data)
         main_metrics["relative sharpe ratio"] = self.__rel_sharpe_ratio(data)
+        main_metrics["theoretical optimal leverage"] = self.__theoretical_leverage(data)
         return main_metrics
 
     def __market_corr(self, data):
@@ -81,6 +82,12 @@ class MainMetrics:
         mu = np.mean(return_data).values[0]
         std = np.std(return_data).values[0]
         return mu / std * np.sqrt(self.__event_frequency(data))
+    
+    def __theoretical_leverage(self, data):
+        return_data = data.pct_change().dropna()
+        mu = np.mean(return_data).values[0]
+        std = np.std(return_data).values[0]
+        return mu / std ** 2 
 
     def __var(self, data):
         return_data = data.pct_change().dropna()
