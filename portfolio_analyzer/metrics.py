@@ -9,7 +9,9 @@ from statsmodels import regression
 class MainMetrics:
     """Compute the main metrics for asset."""
 
-    def __init__(self, benchmark, mkt="NYSE", frequency="daily"):
+    data_frequency = {"daily": 252, "weekly": 52, "monthly": 12, "quarterly": 4}
+
+    def __init__(self, benchmark, mkt="NYSE", frequency=None):
         self.frequency = frequency
         self.mkt_cal = mcal.get_calendar(mkt)
         self.benchmark = benchmark
@@ -82,12 +84,12 @@ class MainMetrics:
         mu = np.mean(return_data).values[0]
         std = np.std(return_data).values[0]
         return mu / std * np.sqrt(self.__event_frequency(data))
-    
+
     def __theoretical_leverage(self, data):
         return_data = data.pct_change().dropna()
         mu = np.mean(return_data).values[0]
         std = np.std(return_data).values[0]
-        return mu / std ** 2 
+        return mu / std ** 2
 
     def __var(self, data):
         return_data = data.pct_change().dropna()
@@ -114,16 +116,21 @@ class MainMetrics:
         return sr_data / sr_benchmark
 
     def __event_frequency(self, data):
-        end_date = data.index[-1]
-        start_date = data.index[-2]
-        data_frequency = len(
-            self.mkt_cal.valid_days(start_date=start_date, end_date=end_date)
-        )
-        frequency = 12
-        if data_frequency < 5:
-            frequency = 252
-        if (data_frequency >= 5) and (data_frequency < 20):
-            frequency = 52
+        if self.frequency:
+            frequency = self.data_frequency[self.frequency]
+        else:
+            end_date = data.index[-1]
+            start_date = data.index[-2]
+            data_frequency = len(
+                self.mkt_cal.valid_days(start_date=start_date, end_date=end_date)
+            )
+            frequency = self.data_frequency["monthly"]
+            if data_frequency < 5:
+                frequency = self.data_frequency["daily"]
+            if (data_frequency >= 5) and (data_frequency < 20):
+                frequency = self.data_frequency["weekly"]
+            if (data_frequency >= 20) and (data_frequency < 60):
+                frequency = self.data_frequency["quarterly"]
         return frequency
 
     @staticmethod
