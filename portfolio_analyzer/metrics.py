@@ -89,7 +89,7 @@ class MainMetrics:
         return_data = data.pct_change().dropna()
         mu = np.mean(return_data).values[0]
         std = np.std(return_data).values[0]
-        return mu / std ** 2
+        return mu / (std ** 2 + mu ** 2)
 
     def __var(self, data):
         return_data = data.pct_change().dropna()
