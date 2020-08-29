@@ -1,10 +1,14 @@
 # Author Pablo Zivic pablozivic@gmail.com original code https://github.com/elsonidoq/py-l1tf
+
 from itertools import chain
 
+import cvxpy
 import numpy as np
 import pandas as pd
+import scipy
 from cvxopt import (blas, div, lapack, matrix, mul, normal, sin, solvers,
                     spdiag, spmatrix)
+from scipy import sparse
 from statsmodels.robust.scale import mad
 from statsmodels.tsa.stattools import adfuller
 
@@ -54,6 +58,27 @@ def _l1tf(corr, delta):
     return corr - D.T * res["x"]
 
 
+def _l2tf(corr, delta):
+    """
+    Perform Hodrick-Prescott filtering.
+
+    :param x:
+    :return:
+    """
+    n = corr.shape[0]
+    ones_row = np.ones((1, n))
+    D = scipy.sparse.spdiags(
+        np.vstack((ones_row, -2 * ones_row, ones_row)), range(3), n - 2, n
+    )
+    x = cvxpy.Variable(shape=n)
+    objective = cvxpy.Minimize(
+        0.5 * cvxpy.sum_squares(corr - x) + delta * cvxpy.norm(D @ x, 2)
+    )
+    problem = cvxpy.Problem(objective)
+    problem.solve(solver=cvxpy.CVXOPT, verbose=False)
+    return np.array(x.value)
+
+
 def l1tf(corr, delta):
     """
     Filter according l1 model. Author Pablo Zivic pablozivic@gmail.com original code https://github.com/elsonidoq/py-l1tf.
@@ -77,6 +102,31 @@ def l1tf(corr, delta):
         raise ValueError("Wrong type for corr")
 
     values = _l1tf(values, delta)
+    values = values * (M - m) + m
+
+    if isinstance(corr, np.ndarray):
+        values = np.asarray(values).squeeze()
+    elif isinstance(corr, pd.Series):
+        values = pd.Series(values, index=corr.index, name=corr.name)
+
+    return values
+
+
+def l2tf(corr, delta):
+    """
+    Filter according l1 model. Author Pablo Zivic pablozivic@gmail.com original code https://github.com/elsonidoq/py-l1tf.
+
+    :param corr: Corrupted signal, should be a numpy array / pandas Series
+    :param delta: Strength of regularization
+    :return: The filtered series
+    """
+    m = float(corr.min())
+    M = float(corr.max())
+    denom = M - m
+    # if denom == 0, corr is constant
+    values = (corr - m) / (1 if denom == 0 else denom)
+
+    values = _l2tf(values.to_numpy(), delta)
     values = values * (M - m) + m
 
     if isinstance(corr, np.ndarray):
@@ -166,5 +216,58 @@ def l1filter(df, delta=1.0e-1, remove_outliers=False, mad_factor=3, print_test=F
         )
     else:
         results = np.exp(pd.concat([pd.DataFrame(l1tf_d), np.log(df)], axis=1))
+
+    return results, test_results
+
+
+def l2filter(df, delta=1.0e-1, remove_outliers=False, mad_factor=3, print_test=False):
+    """
+    Apply the l2tf function to the whole portfolio data optionally removing outliers.
+
+    :param df: A pandas Dataframe
+    :param delta: The delta parameter of the l1tf function
+    :param remove_outliers: Whether outliers should be removed
+    :param mad_factor: Strength of the outlier detection technique
+    :param print_test: If true print the results of Augmented Dickey-Fuller test
+    :return dataframe, test: a dataframe with orginal data en filtered data and the results of stationary test
+    """
+    l2tf_d = {key + "_filter": None for key in df.keys()}
+    test_results = {}
+    if remove_outliers:
+        wo_outliers_d = {key + "_outlier": None for key in df.keys()}
+    ks = df.keys()
+    if isinstance(delta, float):
+        delta = [delta] * len(df.columns)
+
+    for i, k in enumerate(ks):
+        t = strip_na(np.log(df[k]))
+        if remove_outliers:
+            t = remove_outliers(t, delta[i], mad_factor)
+            wo_outliers_d[k + "_outlier"] = t
+        s = l2tf(t, delta[i])
+        l2tf_d[k + "_filter"] = s
+
+        adfTest = adfuller(t - s, autolag="AIC")
+        dfResults = pd.Series(
+            adfTest[0:4],
+            index=["ADF Test Statistic", "P-Value", "Lags Used", "Observations Used"],
+        )
+        # Add Critical Values
+        for key, value in adfTest[4].items():
+            dfResults["Critical Value (%s)" % key] = value
+
+        if print_test:
+            print("Augmented Dickey-Fuller Test Results for {}:".format(k))
+            print(dfResults)
+
+        test_results[k] = dfResults.to_frame(name=k)
+    if remove_outliers:
+        results = np.exp(
+            pd.concat(
+                [pd.DataFrame(l2tf_d), pd.DataFrame(wo_outliers_d), np.log(df)], axis=1
+            )
+        )
+    else:
+        results = np.exp(pd.concat([pd.DataFrame(l2tf_d), np.log(df)], axis=1))
 
     return results, test_results

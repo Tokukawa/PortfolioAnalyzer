@@ -21,6 +21,7 @@ setuptools.setup(
         "pandas_market_calendars",
         "yahoofinancials",
         "cvxopt",
+        "cvxpy",
         "statsmodels  ",
     ],
     packages=setuptools.find_packages(),
