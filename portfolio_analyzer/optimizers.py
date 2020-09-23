@@ -20,7 +20,7 @@ def minimal_variance(data):
     return pd.DataFrame([w[:-1]], columns=data.columns)
 
 
-def max_kelly(data):
+def max_kelly(data, leverage=1.0):
     """Find a numerical solution of the portofolio based on the exact kelly criterion."""
     returns_data = data.pct_change().dropna()
     no_of_stocks = len(returns_data.columns)
@@ -28,7 +28,7 @@ def max_kelly(data):
     portfolio_returns = returns_data.values @ weights
     final_portfolio_value = cp.sum(cp.log(1 + portfolio_returns))
     objective = cp.Maximize(final_portfolio_value)
-    constraints = [0.0 <= weights, cp.sum(weights) == 1]
+    constraints = [0.0 <= weights, cp.sum(weights) <= leverage]
     problem = cp.Problem(objective, constraints)
     problem.solve()
     return pd.DataFrame([weights.value], columns=data.columns)
