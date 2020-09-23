@@ -1,3 +1,4 @@
+import cvxpy as cp
 import numpy as np
 import pandas as pd
 from pypfopt.risk_models import CovarianceShrinkage
@@ -17,6 +18,20 @@ def minimal_variance(data):
     B[-1] = 1
     w = np.dot(np.linalg.inv(A), B)
     return pd.DataFrame([w[:-1]], columns=data.columns)
+
+
+def max_kelly(data):
+    """Find a numerical solution of the portofolio based on the exact kelly criterion."""
+    returns_data = data.pct_change().dropna()
+    no_of_stocks = len(returns_data.columns)
+    weights = cp.Variable(no_of_stocks)
+    portfolio_returns = returns_data.values @ weights
+    final_portfolio_value = cp.sum(cp.log(1 + portfolio_returns))
+    objective = cp.Maximize(final_portfolio_value)
+    constraints = [0.0 <= weights, cp.sum(weights) == 1]
+    problem = cp.Problem(objective, constraints)
+    problem.solve()
+    return pd.DataFrame([weights.value], columns=data.columns)
 
 
 def approximated_max_kelly(data):
