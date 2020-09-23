@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from pypfopt.risk_models import CovarianceShrinkage
 from scipy.optimize import minimize
+from sklearn.covariance import ledoit_wolf
 
 
 def minimal_variance(data):
@@ -21,7 +22,8 @@ def minimal_variance(data):
 def approximated_max_kelly(data):
     """Find a approximated solution of the portofolio based on kelly criterion."""
     returns_data = data.pct_change().dropna()
-    sigma = CovarianceShrinkage(data).shrunk_covariance(delta=1e-2)
+    _, delta = ledoit_wolf(data)
+    sigma = CovarianceShrinkage(data).shrunk_covariance(delta=delta)
     mu = returns_data.mean(axis=0)
     A = 0.5 * sigma
     A = np.hstack((A, np.ones((sigma.shape[0], 1))))
