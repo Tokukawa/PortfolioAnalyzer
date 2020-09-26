@@ -3,7 +3,7 @@ from yahoofinancials import YahooFinancials
 
 
 def yahoo2pandas(
-    tickers, from_date="2000-01-01", to_date="2100-12-31", frequency="weekly"
+    tickers, from_date="1900-01-01", to_date="2100-12-31", frequency="daily"
 ):
     """Download raw stocks data from yahoo and return a pandas dataframe."""
     results = {}
