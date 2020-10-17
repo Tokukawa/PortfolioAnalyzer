@@ -47,7 +47,7 @@ class OutOfSampleBackTest:
         method="time-series-cv",
         past_blocks=1,
         benchmark=False,
-        rebalance=True,
+        rebalance=False,
     ):
         self.data = data
         self.portfolio_optimization = portfolio_optimization
