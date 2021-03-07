@@ -130,3 +130,6 @@ dmypy.json
 
 # Pycharm
 .idea/
+
+td_client_auth.json
+td_tokens.json
