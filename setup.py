@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="portfolio_analyzer",
-    version="0.0.2",
+    version="0.0.3",
     author="Tokukawa",
     author_email="emanuele.luzio@gmail.com",
     description="This package is a collection of tools I use to analyze portfolios.",
@@ -23,6 +23,7 @@ setuptools.setup(
         "cvxopt",
         "cvxpy",
         "statsmodels  ",
+        "td-ameritrade-python-api"
     ],
     packages=setuptools.find_packages(),
     classifiers=[
