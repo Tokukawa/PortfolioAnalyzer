@@ -18,8 +18,9 @@ pip install .
 ```
 Depends on your OS and arch (OSX mostly), maybe you will have this error:
 
-To fix that you need to pass explicit your arch:
 > failed building wheel for scs
+
+To fix that you need to pass explicit your arch:
 
 ```bash
 ARCHFLAGS="-arch x86_64"  pip install .
