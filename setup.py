@@ -17,7 +17,7 @@ setuptools.setup(
         "jupyterlab",
         "sklearn",
         "matplotlib",
-        "pandas<0.26.0,>=0.25.3",
+        "pandas==1.2.*",
         "pandas_market_calendars",
         "yahoofinancials",
         "cvxopt",
