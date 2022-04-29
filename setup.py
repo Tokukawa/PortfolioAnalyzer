@@ -17,6 +17,7 @@ setuptools.setup(
         "jupyterlab",
         "sklearn",
         "matplotlib",
+        "seaborn",
         "pandas==1.2.*",
         "pandas_market_calendars",
         "yahoofinancials",
