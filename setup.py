@@ -15,7 +15,7 @@ setuptools.setup(
     install_requires=[
         "pyportfolioopt",
         "jupyterlab",
-        "sklearn",
+        "scikit-learn",
         "matplotlib",
         "seaborn",
         "pandas==1.2.*",
