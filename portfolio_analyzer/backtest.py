@@ -59,7 +59,17 @@ class OutOfSampleBackTest:
 
     def run(self):
         """Perform the task needed for the back test."""
-        data_splits = np.split(self.data, self.splits)
+        block_size, remainder = divmod(len(self.data), self.splits)
+        if remainder:
+            raise ValueError(
+                "data length ({}) must be evenly divisible by splits ({})".format(
+                    len(self.data), self.splits
+                )
+            )
+        data_splits = [
+            self.data.iloc[i * block_size : (i + 1) * block_size]
+            for i in range(self.splits)
+        ]
         out_of_samples_performance = []
         if self.method == "time-series-cv":
             for i in range(self.splits)[1:-1]:
