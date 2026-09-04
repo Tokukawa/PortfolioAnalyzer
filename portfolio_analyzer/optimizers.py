@@ -88,7 +88,7 @@ def risk_parity(data):
     returns_data = data.pct_change().dropna()
     sigma = returns_data.cov().values
     risk_allocation = np.ones((1, sigma.shape[0])) / sigma.shape[0]
-    w0 = np.random.rand(1, sigma.shape[0])
+    w0 = np.random.rand(sigma.shape[0])
     cons = (
         {"type": "eq", "fun": total_weight_constraint},
         {"type": "ineq", "fun": long_only_constraint},

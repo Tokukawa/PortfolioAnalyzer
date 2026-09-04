@@ -53,9 +53,9 @@ class MainMetrics:
         )
 
     def __average_arithmetic_return(self, data):
-        return np.mean(data.pct_change().dropna(), axis=0)[0] * self.__event_frequency(
-            data
-        )
+        return np.mean(
+            data.pct_change().dropna(), axis=0
+        ).values[0] * self.__event_frequency(data)
 
     def __average_geometric_return(self, data):
         year_events = self.__event_frequency(data)
@@ -81,19 +81,19 @@ class MainMetrics:
 
     def __sharpe_ratio(self, data):
         return_data = data.pct_change().dropna()
-        mu = np.mean(return_data).values[0]
-        std = np.std(return_data).values[0]
+        mu = return_data.mean().values[0]
+        std = return_data.std(ddof=0).values[0]
         return mu / std * np.sqrt(self.__event_frequency(data))
 
     def __theoretical_leverage(self, data):
         return_data = data.pct_change().dropna()
-        mu = np.mean(return_data).values[0]
-        std = np.std(return_data).values[0]
+        mu = return_data.mean().values[0]
+        std = return_data.std(ddof=0).values[0]
         return mu / (std ** 2 + mu ** 2)
 
     def __var(self, data):
         return_data = data.pct_change().dropna()
-        return np.var(return_data).values[0] * self.__event_frequency(data)
+        return return_data.var(ddof=0).values[0] * self.__event_frequency(data)
 
     def __rel_var(self, data):
         var_data = self.__var(data)

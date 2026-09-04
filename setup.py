@@ -18,13 +18,12 @@ setuptools.setup(
         "scikit-learn",
         "matplotlib",
         "seaborn",
-        "pandas==1.2.*",
+        "pandas>=1.5",
         "pandas_market_calendars",
-        "yahoofinancials",
+        "yfinance",
         "cvxopt",
         "cvxpy",
-        "statsmodels  ",
-        "td-ameritrade-python-api"
+        "statsmodels",
     ],
     packages=setuptools.find_packages(),
     classifiers=[

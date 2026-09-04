@@ -1,6 +1,6 @@
 import numpy as np
-import pandas as pd
-from yahoofinancials import YahooFinancials
+
+from .stocks_data_loader import yahoo2pandas
 
 
 class Rebalance:
@@ -45,25 +45,14 @@ class Rebalance:
 
     def _get_data(self, tickers):
         """Define and internal method."""
-        historical_stock_prices = YahooFinancials(tickers).get_historical_price_data(
-            "2019-01-01", "2030-01-01", "daily"
-        )
-        results = {}
-        for ticker in tickers:
-            df = pd.DataFrame(historical_stock_prices[ticker]["prices"])
-            df["formatted_date"] = (df["formatted_date"]).astype("datetime64[ns]")
-            df = df.set_index("formatted_date")
-            results[ticker] = df["close"].loc[
-                ~df["close"].index.duplicated(keep="first")
-            ]
-        return pd.DataFrame.from_dict(results).dropna()
+        return yahoo2pandas(list(tickers), "2019-01-01", "2030-01-01", "daily")
 
     def _get_new_exposure(self, weights):
         """Define and internal method."""
         new_exposure = {}
         for ticker in weights:
             new_exposure[ticker] = int(
-                weights[ticker] * self.balance / self.quotes[ticker] + 0.5
+                weights[ticker] * self.balance / self.quotes[ticker].values[-1] + 0.5
             )
         return new_exposure
 

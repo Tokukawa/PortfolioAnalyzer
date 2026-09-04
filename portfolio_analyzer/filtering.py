@@ -150,7 +150,7 @@ def remove_outliers(t, delta, mad_factor=3):
     t = t.copy()
     t[np.abs(diff - np.median(diff)) > mad_factor * mad(diff)] = np.nan
 
-    t = t.fillna(method="ffill").fillna(method="bfill")
+    t = t.ffill().bfill()
     return t
 
 
@@ -161,26 +161,26 @@ def strip_na(s):
     :param s: an instance of pd.Series
     """
     m = s.min()
-    lmask = s.fillna(method="ffill").fillna(m - 1) == m - 1
-    rmask = s.fillna(method="bfill").fillna(m - 1) == m - 1
+    lmask = s.ffill().fillna(m - 1) == m - 1
+    rmask = s.bfill().fillna(m - 1) == m - 1
     mask = np.logical_or(lmask, rmask)
     return s[np.logical_not(mask)]
 
 
-def l1filter(df, delta=1.0e-1, remove_outliers=False, mad_factor=3, print_test=False):
+def l1filter(df, delta=1.0e-1, strip_outliers=False, mad_factor=3, print_test=False):
     """
     Apply the l1tf function to the whole portfolio data optionally removing outliers.
 
     :param df: A pandas Dataframe
     :param delta: The delta parameter of the l1tf function
-    :param remove_outliers: Whether outliers should be removed
+    :param strip_outliers: Whether outliers should be removed
     :param mad_factor: Strength of the outlier detection technique
     :param print_test: If true print the results of Augmented Dickey-Fuller test
     :return dataframe, test: a dataframe with orginal data en filtered data and the results of stationary test
     """
     l1tf_d = {key + "_filter": None for key in df.keys()}
     test_results = {}
-    if remove_outliers:
+    if strip_outliers:
         wo_outliers_d = {key + "_outlier": None for key in df.keys()}
     ks = df.keys()
     if isinstance(delta, float):
@@ -188,7 +188,7 @@ def l1filter(df, delta=1.0e-1, remove_outliers=False, mad_factor=3, print_test=F
 
     for i, k in enumerate(ks):
         t = strip_na(np.log(df[k]))
-        if remove_outliers:
+        if strip_outliers:
             t = remove_outliers(t, delta[i], mad_factor)
             wo_outliers_d[k + "_outlier"] = t
         s = l1tf(t, delta[i])
@@ -208,7 +208,7 @@ def l1filter(df, delta=1.0e-1, remove_outliers=False, mad_factor=3, print_test=F
             print(dfResults)
 
         test_results[k] = dfResults.to_frame(name=k)
-    if remove_outliers:
+    if strip_outliers:
         results = np.exp(
             pd.concat(
                 [pd.DataFrame(l1tf_d), pd.DataFrame(wo_outliers_d), np.log(df)], axis=1
@@ -220,20 +220,20 @@ def l1filter(df, delta=1.0e-1, remove_outliers=False, mad_factor=3, print_test=F
     return results, test_results
 
 
-def l2filter(df, delta=1.0e-1, remove_outliers=False, mad_factor=3, print_test=False):
+def l2filter(df, delta=1.0e-1, strip_outliers=False, mad_factor=3, print_test=False):
     """
     Apply the l2tf function to the whole portfolio data optionally removing outliers.
 
     :param df: A pandas Dataframe
     :param delta: The delta parameter of the l1tf function
-    :param remove_outliers: Whether outliers should be removed
+    :param strip_outliers: Whether outliers should be removed
     :param mad_factor: Strength of the outlier detection technique
     :param print_test: If true print the results of Augmented Dickey-Fuller test
     :return dataframe, test: a dataframe with orginal data en filtered data and the results of stationary test
     """
     l2tf_d = {key + "_filter": None for key in df.keys()}
     test_results = {}
-    if remove_outliers:
+    if strip_outliers:
         wo_outliers_d = {key + "_outlier": None for key in df.keys()}
     ks = df.keys()
     if isinstance(delta, float):
@@ -241,7 +241,7 @@ def l2filter(df, delta=1.0e-1, remove_outliers=False, mad_factor=3, print_test=F
 
     for i, k in enumerate(ks):
         t = strip_na(np.log(df[k]))
-        if remove_outliers:
+        if strip_outliers:
             t = remove_outliers(t, delta[i], mad_factor)
             wo_outliers_d[k + "_outlier"] = t
         s = l2tf(t, delta[i])
@@ -261,7 +261,7 @@ def l2filter(df, delta=1.0e-1, remove_outliers=False, mad_factor=3, print_test=F
             print(dfResults)
 
         test_results[k] = dfResults.to_frame(name=k)
-    if remove_outliers:
+    if strip_outliers:
         results = np.exp(
             pd.concat(
                 [pd.DataFrame(l2tf_d), pd.DataFrame(wo_outliers_d), np.log(df)], axis=1
